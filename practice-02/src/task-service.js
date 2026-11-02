@@ -1,119 +1,107 @@
-
+// Заготовка модуля. Реализация функций прикладной логики задач.
 
 export function createTask(id, title, priority = "medium") {
   if (!Number.isSafeInteger(id) || id <= 0) {
-    return { ok: false, error: "id должен быть положительным безопасным целым числом" };
+    return { ok: false, error: "Некорректный id" };
   }
-  if (typeof title !== "string") {
-    return { ok: false, error: "Название должно быть строкой" };
+  if (typeof title !== "string" || title.trim() === "") {
+    return { ok: false, error: "Некорректный заголовок" };
   }
-  const trimmedTitle = title.trim();
-  if (trimmedTitle.length === 0 || trimmedTitle.length > 100) {
-    return { ok: false, error: "Длина названия должна быть от 1 до 100 символов" };
+  const validPriorities = ["low", "medium", "high"];
+  if (!validPriorities.includes(priority)) {
+    return { ok: false, error: "Некорректный приоритет" };
   }
-  if (!["low", "medium", "high"].includes(priority)) {
-    return { ok: false, error: "Недопустимый приоритет" };
-  }
-
   return {
     ok: true,
-    task: {
-      id,
-      title: trimmedTitle,
-      completed: false,
-      priority,
-    },
+    task: { id, title: title.trim(), completed: false, priority }
   };
 }
 
 export function findTaskById(tasks, id) {
-  return tasks.find((task) => task.id === id);
+  if (!Array.isArray(tasks)) return undefined;
+  return tasks.find(task => task.id === id);
 }
 
 export function getPendingTasks(tasks) {
-  return tasks.filter((task) => !task.completed);
+  if (!Array.isArray(tasks)) return [];
+  return tasks.filter(task => task.completed === false);
 }
 
 export function getTaskTitles(tasks) {
-  return tasks.map((task) => task.title);
+  if (!Array.isArray(tasks)) return [];
+  return tasks.map(task => task.title);
 }
 
 export function getTaskStats(tasks) {
+  if (!Array.isArray(tasks)) {
+    return { total: 0, completed: 0, pending: 0, progress: "0.0%" };
+  }
   const total = tasks.length;
-  const completed = tasks.filter((task) => task.completed).length;
+  const completed = tasks.filter(task => task.completed === true).length;
   const pending = total - completed;
-  const progress = total > 0 ? (completed / total) * 100 : 0;
-
-  return { total, completed, pending, progress };
+  const progressNum = total === 0 ? 0 : (completed / total) * 100;
+  
+  return {
+    total,
+    completed,
+    pending,
+    progress: progressNum.toFixed(1) + "%"
+  };
 }
 
 export function addTask(tasks, id, title, priority = "medium") {
-  if (tasks.some((task) => task.id === id)) {
+  if (!Array.isArray(tasks)) {
+    return { ok: false, error: "Неверный формат массива задач" };
+  }
+  if (findTaskById(tasks, id)) {
     return { ok: false, error: "Задача с таким id уже существует" };
   }
-  const createResult = createTask(id, title, priority);
-  if (!createResult.ok) {
-    return createResult;
+  const creationResult = createTask(id, title, priority);
+  if (!creationResult.ok) {
+    return creationResult;
   }
-
   return {
     ok: true,
-    tasks: [...tasks, createResult.task],
+    tasks: [...tasks, creationResult.task]
   };
 }
 
 export function setTaskCompleted(tasks, id, completed) {
-  if (typeof completed !== "boolean") {
-    return { ok: false, error: "Статус completed должен быть логическим значением" };
+  if (!Array.isArray(tasks) || !Number.isSafeInteger(id) || id <= 0 || typeof completed !== "boolean") {
+    return { ok: false, error: "Некорректные аргументы" };
   }
-  const targetTask = findTaskById(tasks, id);
-  if (!targetTask) {
-    return { ok: false, error: "Задача не найдена" };
+  const index = tasks.findIndex(task => task.id === id);
+  if (index === -1) {
+    return { ok: false, error: "Задача с указанным id не найдена" };
   }
-
-  const updatedTasks = tasks.map((task) =>
-    task.id === id ? { ...task, completed } : task
+  const newTasks = tasks.map((task, i) => 
+    i === index ? { ...task, completed } : { ...task }
   );
-
-  return {
-    ok: true,
-    tasks: updatedTasks,
-  };
+  return { ok: true, tasks: newTasks };
 }
 
 export function renameTask(tasks, id, title) {
-  if (typeof title !== "string") {
-    return { ok: false, error: "Название должно быть строкой" };
+  if (!Array.isArray(tasks) || !Number.isSafeInteger(id) || id <= 0 || typeof title !== "string" || title.trim() === "") {
+    return { ok: false, error: "Некорректные аргументы" };
   }
-  const trimmedTitle = title.trim();
-  if (trimmedTitle.length === 0 || trimmedTitle.length > 100) {
-    return { ok: false, error: "Длина названия должна быть от 1 до 100 символов" };
+  const index = tasks.findIndex(task => task.id === id);
+  if (index === -1) {
+    return { ok: false, error: "Задача с указанным id не найдена" };
   }
-  const targetTask = findTaskById(tasks, id);
-  if (!targetTask) {
-    return { ok: false, error: "Задача не найдена" };
-  }
-
-  const updatedTasks = tasks.map((task) =>
-    task.id === id ? { ...task, title: trimmedTitle } : task
+  const newTasks = tasks.map((task, i) => 
+    i === index ? { ...task, title: title.trim() } : { ...task }
   );
-
-  return {
-    ok: true,
-    tasks: updatedTasks,
-  };
+  return { ok: true, tasks: newTasks };
 }
 
 export function removeTask(tasks, id) {
-  const targetTask = findTaskById(tasks, id);
-  if (!targetTask) {
-    return { ok: false, error: "Задача не найдена" };
+  if (!Array.isArray(tasks) || !Number.isSafeInteger(id) || id <= 0) {
+    return { ok: false, error: "Некорректный id" };
   }
-
-  const updatedTasks = tasks.filter((task) => task.id !== id);
-
-  return {
-    ok: true,
-    tasks: updatedTasks,
-  };
+  const index = tasks.findIndex(task => task.id === id);
+  if (index === -1) {
+    return { ok: false, error: "Задача с указанным id не найдена" };
+  }
+  const newTasks = tasks.filter(task => task.id !== id);
+  return { ok: true, tasks: newTasks };
 }

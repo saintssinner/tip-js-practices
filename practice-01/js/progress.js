@@ -1,8 +1,8 @@
 "use strict";
 
 // Вариант 7: Михайлова София, ЭФБО-13-25
-const totalTasks = 10;
-const completedTasks = 7;
+const totalTasks = 5;
+const completedTasks = 6;
 
 
 if (!Number.isInteger(totalTasks) || !Number.isInteger(completedTasks)) {

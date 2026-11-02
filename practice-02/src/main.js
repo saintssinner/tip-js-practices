@@ -51,3 +51,6 @@ if (!res.ok) {
 }
 console.log("Количество задач в demoTasks осталось прежним:", demoTasks.length);
 console.log("Идентификаторы demoTasks:", demoTasks.map(t => t.id));
+
+
+
